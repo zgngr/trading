@@ -1,5 +1,6 @@
 import argparse
 import os
+import csv
 import fnmatch
 import importlib
 import pandas as pd
@@ -22,6 +23,11 @@ if __name__ == "__main__":
     mod = importlib.import_module(
         f'strategies.{args.strategy}')
 
+    csvout = open(f'{args.strategy}.csv', 'w', newline='')
+    result_writer = csv.writer(csvout, delimiter=',')
+    result_writer.writerow(['Symbol', 'Start', 'End',
+                            'Strategy', 'Initial value', 'Final value', 'ROI %'])  # init header
+
     for f in os.listdir(args.data_path):
 
         if not fnmatch.fnmatch(f, args.grep):
@@ -34,7 +40,7 @@ if __name__ == "__main__":
             df.index = pd.to_datetime(df.index, unit='ms')
 
             cerebro = bt.Cerebro()
-            cerebro.broker.setcash(100000)
+            # cerebro.broker.setcash(100000)
             cerebro.adddata(bt.feeds.PandasData(dataname=mod.apply(df)))
             cerebro.addstrategy(strategy=getattr(
                 mod, helpers.to_clsname(args.strategy)), verbose=True)
@@ -43,10 +49,18 @@ if __name__ == "__main__":
             cerebro.run()
             final = cerebro.broker.get_value()
             roi = (final / initial) - 1.0
-            print(f'symbol:     {f}')
-            print('ROI:        {:.2f}%'.format(100.0 * roi))
 
+            pair, year_start, year_end, timeframe = helpers.split_fname(f)
+
+            result_writer.writerow(
+                [pair, timeframe, year_start, year_end, args.strategy, initial, round(final), round(roi, 3)])
+
+            print(f'Symbol:     {f}')
+            print('ROI:        {:.2f}%'.format(100.0 * roi))
             print('---------------------------------')
 
         except:
             print(f'problem with {f}')
+            csvout.close()
+
+    csvout.close()
