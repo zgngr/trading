@@ -19,6 +19,9 @@ parser.add_argument("--grep", type=str, default='*.csv')
 parser.add_argument("--data_path", type=str, default='data/')
 args = parser.parse_args()
 
+time_frames = ['15min', '30min', '1h', '2h',
+               '4h', '6h', '8h', '1d', '2d', '3d', '1w']
+
 for strategy in strategies:
 
     for data in os.listdir(args.data_path):
@@ -26,29 +29,33 @@ for strategy in strategies:
         if not fnmatch.fnmatch(data, args.grep):
             continue
 
-        datapath = args.data_path + data
+        sample = helpers.to_df(args.data_path + data)
+        pair, year_start, year_end, _ = helpers.split_fname(data)
 
-        print('\n ------------ ', datapath)
+        print('\n ------------ ', f'{strategy}_{pair}_{year_start}-{year_end}')
         print()
 
-        pair, year_start, year_end, timeframe = helpers.split_fname(data)
-        outfname = f'result/{strategy}_{pair}_{year_start}-{year_end}_{timeframe}.csv'
-        csvout = open(outfname, 'w', newline='')
-        result_writer = csv.writer(csvout, delimiter=',')
-        result_writer.writerow(['Pair', 'Timeframe', 'Start', 'End', 'Strategy', 'Period',
-                               'Final value', '%', 'Total win', 'Total loss', 'SQN'])  # init header
+        for time_frame in reversed(time_frames):
 
-        for period in periods:
+            outfname = f'result/{strategy}_{pair}_{year_start}-{year_end}_{time_frame}.csv'
+            csvout = open(outfname, 'w', newline='')
+            result_writer = csv.writer(csvout, delimiter=',')
+            result_writer.writerow(['Pair', 'Timeframe', 'Start', 'End', 'Strategy', 'Period',
+                                    'Final value', '%', 'Total win', 'Total loss', 'SQN'])  # init header
 
-            end_val, totalwin, totalloss, pnl_net, sqn = backtest.run(
-                datapath, period, strategy, commission_val, portofolio, stake_val, quantity, plot)
+            df = sample(time_frame)
 
-            profit = (pnl_net / portofolio) * 100
+            for period in periods:
 
-            print('data processed: %s, %s (Period %d) --- Ending Value: %.2f --- Total win/loss %d/%d, SQN %.2f' %
-                  (datapath[5:], strategy, period, end_val, totalwin, totalloss, sqn))
+                end_val, totalwin, totalloss, pnl_net, sqn = backtest.run(
+                    df, period, strategy, commission_val, portofolio, stake_val, quantity, plot)
 
-            result_writer.writerow([pair, timeframe, year_start, year_end, strategy, period, round(
-                end_val, 3), round(profit, 3), totalwin, totalloss, sqn])
+                profit = (pnl_net / portofolio) * 100
 
-        csvout.close()
+                print('processing: %s, %s (Period %d) --- Ending Value: %.2f --- Total win/loss %d/%d, SQN %.2f' %
+                      (outfname, strategy, period, end_val, totalwin, totalloss, sqn))
+
+                result_writer.writerow([pair, time_frame, year_start, year_end, strategy, period, round(
+                    end_val, 3), round(profit, 3), totalwin, totalloss, sqn])
+
+            csvout.close()

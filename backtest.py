@@ -1,7 +1,9 @@
-import backtrader as bt
-import pandas as pd
 import importlib
 import warnings
+
+import backtrader as bt
+import pandas as pd
+
 import helpers
 
 pd.set_option('display.max_rows', None)
@@ -16,16 +18,11 @@ def get_sqn(analyzer):
     return round(analyzer.sqn, 2)
 
 
-def run(datapath, period, strategy, commission_val=None, portofolio=10000.0, stake_val=1, quantity=0.01, plt=False):
-
-    cerebro = bt.Cerebro()
-
-    df = pd.read_csv(datapath, index_col=0)
-    df.set_index('close_time', inplace=True)
-    df.index = pd.to_datetime(df.index, unit='ms')
+def run(df, period, strategy, commission_val=None, portofolio=10000.0, stake_val=1, quantity=0.01, plt=False):
 
     mod = importlib.import_module(f'strategies.{strategy}')
 
+    cerebro = bt.Cerebro()
     cerebro.adddata(bt.feeds.PandasData(dataname=mod.apply(df, period)))
     cerebro.addstrategy(strategy=getattr(mod, helpers.to_clsname(strategy)))
     cerebro.addanalyzer(bt.analyzers.TradeAnalyzer, _name="ta")
