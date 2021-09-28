@@ -40,7 +40,6 @@ if __name__ == "__main__":
             df.index = pd.to_datetime(df.index, unit='ms')
 
             cerebro = bt.Cerebro()
-            # cerebro.broker.setcash(100000)
             cerebro.adddata(bt.feeds.PandasData(dataname=mod.apply(df)))
             cerebro.addstrategy(strategy=getattr(
                 mod, helpers.to_clsname(args.strategy)), verbose=True)

@@ -16,7 +16,7 @@ def get_sqn(analyzer):
     return round(analyzer.sqn, 2)
 
 
-def run(datapath, start, end, period, strategy, commission_val=None, portofolio=10000.0, stake_val=1, quantity=0.01, plt=False):
+def run(datapath, period, strategy, commission_val=None, portofolio=10000.0, stake_val=1, quantity=0.01, plt=False):
 
     cerebro = bt.Cerebro()
 

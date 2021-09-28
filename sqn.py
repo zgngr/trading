@@ -1,5 +1,7 @@
+import argparse
 import backtest
 import csv
+import fnmatch
 import os
 import helpers
 
@@ -8,16 +10,20 @@ portofolio = 10000000.0  # amount of money we start with
 stake_val = 1
 quantity = 0.10  # percentage to buy based on the current portofolio amount
 
-start = '2017-01-01'
-end = '2020-12-31'
 strategies = ['super_trend']
 periods = range(10, 30)
 plot = False
 
+parser = argparse.ArgumentParser()
+parser.add_argument("--grep", type=str, default='*.csv')
+args = parser.parse_args()
 
 for strategy in strategies:
 
     for data in os.listdir("./data"):
+
+        if not fnmatch.fnmatch(data, args.grep):
+            continue
 
         datapath = 'data/' + data
 
@@ -34,16 +40,14 @@ for strategy in strategies:
         for period in periods:
 
             end_val, totalwin, totalloss, pnl_net, sqn = backtest.run(
-                datapath, start, end, period, strategy, commission_val, portofolio, stake_val, quantity, plot)
-            backtest.run(datapath, start, end, period, strategy,
-                         commission_val, portofolio, stake_val, quantity, plot)
+                datapath, period, strategy, commission_val, portofolio, stake_val, quantity, plot)
 
             profit = (pnl_net / portofolio) * 100
 
             print('data processed: %s, %s (Period %d) --- Ending Value: %.2f --- Total win/loss %d/%d, SQN %.2f' %
                   (datapath[5:], strategy, period, end_val, totalwin, totalloss, sqn))
 
-            result_writer.writerow([pair, timeframe, start, end, strategy, period, round(
+            result_writer.writerow([pair, timeframe, year_start, year_end, strategy, period, round(
                 end_val, 3), round(profit, 3), totalwin, totalloss, sqn])
 
         csvout.close()
