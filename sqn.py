@@ -16,16 +16,17 @@ plot = False
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--grep", type=str, default='*.csv')
+parser.add_argument("--data_path", type=str, default='data/')
 args = parser.parse_args()
 
 for strategy in strategies:
 
-    for data in os.listdir("./data"):
+    for data in os.listdir(args.data_path):
 
         if not fnmatch.fnmatch(data, args.grep):
             continue
 
-        datapath = 'data/' + data
+        datapath = args.data_path + data
 
         print('\n ------------ ', datapath)
         print()
