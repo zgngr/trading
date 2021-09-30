@@ -1,4 +1,7 @@
 import pandas as pd
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
+
 
 
 def split_fname(fname):
@@ -25,3 +28,20 @@ def to_df(datapath):
         return df
 
     return resample
+
+
+def apply_filters(df, args):
+    now = datetime.now()
+
+    if args.last_month:
+        f = df.index >= (now - relativedelta(months=args.last_month))
+        df = df.loc[f]
+
+    if args.last_days:
+        f = df.index >= (now - relativedelta(days=args.last_days))
+        df = df.loc[f]
+
+    start = df.index[0].strftime("%Y-%m-%d")
+    end = df.index[-1].strftime("%Y-%m-%d")
+
+    return df, start, end

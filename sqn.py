@@ -1,22 +1,28 @@
 import argparse
-import backtest
 import csv
 import fnmatch
 import os
+from datetime import datetime
+
+from dateutil.relativedelta import relativedelta
+
+import backtest
 import helpers
 
 commission_val = 0.01  # 0.04% taker fees binance usdt futures
 portofolio = 10000000.0  # amount of money we start with
 stake_val = 1
 quantity = 0.10  # percentage to buy based on the current portofolio amount
+plot = False
 
 strategies = ['super_trend']
 periods = range(10, 30)
-plot = False
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--grep", type=str, default='*.csv')
 parser.add_argument("--data_path", type=str, default='data/')
+parser.add_argument("--last_month", type=int, default=None)
+parser.add_argument("--last_days", type=int, default=None)
 args = parser.parse_args()
 
 time_frames = ['15min', '30min', '1h', '2h',
@@ -30,20 +36,21 @@ for strategy in strategies:
             continue
 
         sample = helpers.to_df(args.data_path + data)
-        pair, year_start, year_end, _ = helpers.split_fname(data)
+        pair, _, _, _ = helpers.split_fname(data)
 
-        print('\n ------------ ', f'{strategy}_{pair}_{year_start}-{year_end}')
+        print('\n ------------ ', f'{data}')
         print()
 
         for time_frame in reversed(time_frames):
 
-            outfname = f'result/{strategy}_{pair}_{year_start}-{year_end}_{time_frame}.csv'
+            df = sample(time_frame)
+            df, start, end = helpers.apply_filters(df, args)
+
+            outfname = f'result/{strategy}_{pair}_{start}_{end}_{time_frame}.csv'
             csvout = open(outfname, 'w', newline='')
             result_writer = csv.writer(csvout, delimiter=',')
             result_writer.writerow(['Pair', 'Timeframe', 'Start', 'End', 'Strategy', 'Period',
                                     'Final value', '%', 'Total win', 'Total loss', 'SQN'])  # init header
-
-            df = sample(time_frame)
 
             for period in periods:
 
@@ -55,7 +62,7 @@ for strategy in strategies:
                 print('processing: %s, %s (Period %d) --- Ending Value: %.2f --- Total win/loss %d/%d, SQN %.2f' %
                       (outfname, strategy, period, end_val, totalwin, totalloss, sqn))
 
-                result_writer.writerow([pair, time_frame, year_start, year_end, strategy, period, round(
+                result_writer.writerow([pair, time_frame, start, end, strategy, period, round(
                     end_val, 3), round(profit, 3), totalwin, totalloss, sqn])
 
             csvout.close()
