@@ -33,10 +33,12 @@ if __name__ == "__main__":
     start, end = helpers.start_end_dates(df)
 
     mod = importlib.import_module(f'strategies.{strategy}')
-
-    csvout = open(f'{strategy}.csv', 'w', newline='')
+    
+    output_name = f'{strategy}_{pair}_{start}_{end}_{interval}.csv'
+    csvout = open(output_name, 'w', newline='')
     result_writer = csv.writer(csvout, delimiter=',')
-    result_writer.writerow(['Symbol', 'Start', 'End', 'Strategy', 'Initial value', 'Final value', 'ROI %'])
+    result_writer.writerow(['Pair', 'Interval', 'Start', 'End', 'Strategy', 'Parameter', 
+                            'Initial value', 'Final value', 'ROI %'])
 
     cerebro = bt.Cerebro()
     cerebro.adddata(bt.feeds.PandasData(dataname=mod.apply(df, strategy_param)))
@@ -47,7 +49,7 @@ if __name__ == "__main__":
     final = cerebro.broker.get_value()
     roi = (final / initial) - 1.0
 
-    result_writer.writerow([pair, start, end, args.strategy, initial, round(final), round(roi, 3)])
+    result_writer.writerow([pair, interval, start, end, strategy, strategy_param, initial, round(final), round(roi, 3)])
     csvout.close()
 
     print(f'Symbol:     {pair}')

@@ -34,7 +34,7 @@ for interval in reversed(intervals):
     outfname = f'result/{output_name}'
     csvout = open(outfname, 'w', newline='')
     result_writer = csv.writer(csvout, delimiter=',')
-    result_writer.writerow(['Pair', 'Timeframe', 'Start', 'End', 'Strategy', 'Parameter',
+    result_writer.writerow(['Pair', 'Interval', 'Start', 'End', 'Strategy', 'Parameter',
                             'Final value', '%', 'Total win', 'Total loss', 'SQN'])
 
     for strategy_param in strategy_params:
