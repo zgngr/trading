@@ -15,8 +15,7 @@ parser.add_argument("--lookback", type=str, default='100')
 parser.add_argument("--strategy", type=str, default='super_trend')
 args = parser.parse_args()
 
-# intervals = ['15m', '30m', '1h', '2h', '4h', '6h', '1d']
-intervals = ['1d']
+intervals = ['15m', '30m', '1h', '2h', '4h', '6h', '1d']
 
 pair = args.pair
 lookback = args.lookback
