@@ -1,5 +1,6 @@
 python-binance
 pandas
 pandas-ta
+ta
 backtrader
 python-dateutil

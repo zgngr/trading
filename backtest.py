@@ -18,7 +18,7 @@ def get_sqn(analyzer):
     return round(analyzer.sqn, 2)
 
 
-def run(df, period, strategy, commission_val=None, portofolio=10000.0, stake_val=1, quantity=0.01, plt=False):
+def run(df, period, strategy, commission_val=None, portofolio=10000.0, stake_val=1, quantity=0.01):
 
     mod = importlib.import_module(f'strategies.{strategy}')
 
@@ -44,8 +44,5 @@ def run(df, period, strategy, commission_val=None, portofolio=10000.0, stake_val
         totalwin, totalloss, pnl_net = 0, 0, 0
 
     sqn = get_sqn(stratexe.analyzers.sqn.get_analysis())
-
-    if plt:
-        cerebro.plot()
 
     return cerebro.broker.getvalue(), totalwin, totalloss, pnl_net, sqn

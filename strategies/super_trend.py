@@ -24,8 +24,7 @@ class SuperTrend(bt.Strategy):
         if not self.position:
             if self.data_openinterest[0] == True and self.data_openinterest[-1] == False:
                 self.log('BUY CREATE, %.2f' % self.dataclose[0])
-                self.size = math.floor(
-                    (0.95 * self.broker.cash) / self.data.close)
+                self.size = math.floor((0.95 * self.broker.cash) / self.dataclose[0])
                 self.buy(size=self.size)
         else:
             if self.data_openinterest[0] == False and self.data_openinterest[-1] == True:
@@ -35,17 +34,17 @@ class SuperTrend(bt.Strategy):
 
 def apply(df, atr_period=14, atr_multiplier=3):
 
-    df['previous_close'] = df['close'].shift(1)
-    df['high-low'] = df['high'] - df['low']
-    df['high-pc'] = abs(df['high'] - df['previous_close'])
-    df['low-pc'] = abs(df['low'] - df['previous_close'])
+    df['previous_close'] = df['Close'].shift(1)
+    df['high-low'] = df['High'] - df['Low']
+    df['high-pc'] = abs(df['High'] - df['previous_close'])
+    df['low-pc'] = abs(df['Low'] - df['previous_close'])
     df['tr'] = df[['high-low', 'high-pc', 'low-pc']].max(axis=1)
 
     # https://www.investopedia.com/terms/a/atr.asp
     # Average true range a.k.a ATR
     df['atr'] = df['tr'].rolling(atr_period).mean()
 
-    hl2 = (df['high'] + df['low']) / 2
+    hl2 = (df['High'] + df['Low']) / 2
 
     # Basic bands
     df['upperband'] = hl2 + (atr_multiplier * df['atr'])
@@ -55,9 +54,9 @@ def apply(df, atr_period=14, atr_multiplier=3):
     for current in range(1, len(df.index)):
         previous = current - 1
 
-        if df['close'][current] > df['upperband'][previous]:
+        if df['Close'][current] > df['upperband'][previous]:
             df['in_uptrend'][current] = True
-        elif df['close'][current] < df['lowerband'][previous]:
+        elif df['Close'][current] < df['lowerband'][previous]:
             df['in_uptrend'][current] = False
         else:
             df['in_uptrend'][current] = df['in_uptrend'][previous]

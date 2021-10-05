@@ -13,5 +13,5 @@ class BuyHold(bt.Strategy):
         self.buy(size=size)
 
 
-def apply(input):
-    return input
+def apply(df, *strategy_params):
+    return df

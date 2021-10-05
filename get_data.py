@@ -21,6 +21,15 @@ symbols = ["ETH"]
 
 intervals = [
     (Client.KLINE_INTERVAL_15MINUTE, '15m')
+    # (Client.KLINE_INTERVAL_30MINUTE, '30m'),
+    # (Client.KLINE_INTERVAL_1HOUR, '1h'),
+    # (Client.KLINE_INTERVAL_2HOUR, '2h'),
+    # (Client.KLINE_INTERVAL_4HOUR, '4h'),
+    # (Client.KLINE_INTERVAL_6HOUR, '6h'),
+    # (Client.KLINE_INTERVAL_8HOUR, '8h'),
+    # (Client.KLINE_INTERVAL_1DAY, '1d'),
+    # (Client.KLINE_INTERVAL_3DAY, '3d'),
+    # (Client.KLINE_INTERVAL_1WEEK, '1w')
 ]
 
 for symbol in symbols:
@@ -29,12 +38,12 @@ for symbol in symbols:
 
         try:
             klines = client.get_historical_klines(
-                f"{symbol}USDT", interval, "1 Jan, 2021")
+                f"{symbol}USDT", interval, "1 Jan, 2019")
         except:
             print(f'{symbol} error')
             continue
 
-        fname = f"{symbol}USDT_2021-2021_{interval_abbr}"
+        fname = f"{symbol}USDT_2019-2021_{interval_abbr}"
 
         with open(f'data/{fname}.csv', 'w') as f:
             write = csv.writer(f)

@@ -4,65 +4,49 @@ import fnmatch
 import os
 from datetime import datetime
 
-from dateutil.relativedelta import relativedelta
-
 import backtest
 import helpers
 
-commission_val = 0.01  # 0.04% taker fees binance usdt futures
-portofolio = 10000000.0  # amount of money we start with
-stake_val = 1
-quantity = 0.10  # percentage to buy based on the current portofolio amount
-plot = False
-
-strategies = ['super_trend']
-periods = range(10, 30)
+strategy_params = range(1, 30)
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--grep", type=str, default='*.csv')
-parser.add_argument("--data_path", type=str, default='data/')
-parser.add_argument("--last_month", type=int, default=None)
-parser.add_argument("--last_days", type=int, default=None)
+parser.add_argument("--pair", type=str, default='BTCUSDT')
+parser.add_argument("--lookback", type=str, default='100')
+parser.add_argument("--strategy", type=str, default='super_trend')
 args = parser.parse_args()
 
-time_frames = ['15min', '30min', '1h', '2h',
-               '4h', '6h', '8h', '1d', '2d', '3d', '1w']
+# intervals = ['15m', '30m', '1h', '2h', '4h', '6h', '1d']
+intervals = ['1d']
 
-for strategy in strategies:
+pair = args.pair
+lookback = args.lookback
+strategy = args.strategy
 
-    for data in os.listdir(args.data_path):
+for interval in reversed(intervals):
 
-        if not fnmatch.fnmatch(data, args.grep):
-            continue
+    df = helpers.getdaydata(pair, interval, lookback)
+    start, end = helpers.start_end_dates(df)
 
-        sample = helpers.to_df(args.data_path + data)
-        pair, _, _, _ = helpers.split_fname(data)
+    output_name = f'{strategy}_{pair}_{start}_{end}_{interval}.csv'
+    print('\n ------------ ', f'{output_name}')
+    print()
 
-        print('\n ------------ ', f'{data}')
-        print()
+    outfname = f'result/{output_name}'
+    csvout = open(outfname, 'w', newline='')
+    result_writer = csv.writer(csvout, delimiter=',')
+    result_writer.writerow(['Pair', 'Timeframe', 'Start', 'End', 'Strategy', 'Parameter',
+                            'Final value', '%', 'Total win', 'Total loss', 'SQN'])
 
-        for time_frame in reversed(time_frames):
+    for strategy_param in strategy_params:
 
-            df = sample(time_frame)
-            df, start, end = helpers.apply_filters(df, args)
+        end_val, totalwin, totalloss, pnl_net, sqn = backtest.run(df, strategy_param, strategy)
 
-            outfname = f'result/{strategy}_{pair}_{start}_{end}_{time_frame}.csv'
-            csvout = open(outfname, 'w', newline='')
-            result_writer = csv.writer(csvout, delimiter=',')
-            result_writer.writerow(['Pair', 'Timeframe', 'Start', 'End', 'Strategy', 'Period',
-                                    'Final value', '%', 'Total win', 'Total loss', 'SQN'])  # init header
+        profit = (pnl_net / 10000.0) * 100
 
-            for period in periods:
+        print('processing: %s, %s (Parameter %d) --- Ending Value: %.2f --- Total win/loss %d/%d, SQN %.2f' %
+                (outfname, strategy, strategy_param, end_val, totalwin, totalloss, sqn))
 
-                end_val, totalwin, totalloss, pnl_net, sqn = backtest.run(
-                    df, period, strategy, commission_val, portofolio, stake_val, quantity, plot)
+        result_writer.writerow(
+            [pair, interval, start, end, strategy, strategy_param, round(end_val, 3), round(profit, 3), totalwin, totalloss, sqn])
 
-                profit = (pnl_net / portofolio) * 100
-
-                print('processing: %s, %s (Period %d) --- Ending Value: %.2f --- Total win/loss %d/%d, SQN %.2f' %
-                      (outfname, strategy, period, end_val, totalwin, totalloss, sqn))
-
-                result_writer.writerow([pair, time_frame, start, end, strategy, period, round(
-                    end_val, 3), round(profit, 3), totalwin, totalloss, sqn])
-
-            csvout.close()
+    csvout.close()
